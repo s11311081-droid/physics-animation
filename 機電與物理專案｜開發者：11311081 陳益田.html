@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080d18">
+<title>單擺與能量守恆｜物理互動模擬器</title>
+<style>
+:root{--bg:#080d18;--panel:#101a2b;--panel2:#0c1422;--line:#263650;--text:#e8f0ff;--muted:#8fa3c2;--cyan:#55d8ff;--green:#55e6a5;--red:#ff657a;--gold:#ffc96b;--purple:#ad91ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 20% 0%,#14233c 0%,var(--bg) 55%);color:var(--text);font:14px/1.5 Inter,"Segoe UI",Arial,sans-serif;min-height:100vh}
+.app{max-width:1440px;margin:auto;padding:22px}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.eyebrow{color:var(--cyan);font-size:11px;letter-spacing:2px;font-weight:800}.top h1{margin:3px 0 0;font-size:clamp(22px,3vw,32px);letter-spacing:.3px}.credit{color:var(--muted);font-size:12px;text-align:right;border:1px solid var(--line);background:#0d1727;padding:10px 13px;border-radius:12px}
+.layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,.9fr);gap:16px}.panel{background:linear-gradient(160deg,rgba(18,29,48,.97),rgba(10,17,30,.97));border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 50px #0005;overflow:hidden}.panel-head{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.panel-head h2{font-size:14px;margin:0;letter-spacing:.5px}.live{color:var(--green);font-size:11px;letter-spacing:1px}.canvas-wrap{position:relative;padding:12px;background:linear-gradient(180deg,#0b1423,#0a1220)}canvas{width:100%;height:470px;display:block;border-radius:12px;background:#0a1423;touch-action:none}.legend{display:flex;gap:16px;flex-wrap:wrap;padding:11px 18px;color:var(--muted);font-size:11px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;padding:0 18px 16px}.btn{border:1px solid #334762;background:#17263b;color:var(--text);border-radius:9px;padding:9px 13px;font-weight:700;cursor:pointer;transition:.18s}.btn:hover{border-color:var(--cyan);transform:translateY(-1px)}.btn.primary{background:linear-gradient(100deg,#087fa4,#1764a5);border-color:#35bce5}.btn.active{border-color:var(--green);color:var(--green)}.side{display:flex;flex-direction:column;gap:16px}.controls{padding:16px 18px}.control{margin-bottom:19px}.control:last-child{margin-bottom:4px}.control-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.control label{font-weight:650}.value{color:var(--cyan);font-variant-numeric:tabular-nums;font-weight:800}.unit{color:var(--muted);font-size:11px;margin-left:3px}input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}.range-meta{display:flex;justify-content:space-between;color:#7185a4;font-size:10px;margin-top:2px}.readouts{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:14px}.metric{background:#0b1525;border:1px solid #20334d;border-radius:11px;padding:11px 12px;min-width:0}.metric .name{color:var(--muted);font-size:10px;letter-spacing:.8px;text-transform:uppercase}.metric .num{font-size:20px;font-weight:800;letter-spacing:-.4px;margin-top:3px;font-variant-numeric:tabular-nums;white-space:nowrap}.metric .unit2{font-size:10px;color:var(--muted);font-weight:500}.energy{padding:14px 16px 16px}.energy-row{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin:9px 0 5px}.bar{height:8px;background:#1b2a40;border-radius:20px;overflow:hidden}.bar>i{display:block;height:100%;width:0%;border-radius:20px;transition:width .08s linear}.formula{padding:12px 15px;color:#9fb2ce;font-size:11px;line-height:1.8;background:#0b1423;border-top:1px solid var(--line)}.formula b{color:#dceaff}.hint{color:var(--muted);font-size:11px;padding:0 18px 15px}.toggleline{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:4px}.toggleline input{accent-color:var(--cyan)}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:1fr 1fr}.side .panel:first-child{grid-column:1/-1}canvas{height:410px}}
+@media(max-width:580px){.app{padding:12px}.top{align-items:flex-start;flex-direction:column}.credit{text-align:left}.side{display:flex}canvas{height:340px}.readouts{grid-template-columns:1fr 1fr}.metric .num{font-size:17px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div><div class="eyebrow">PHYSICS LAB · INTERACTIVE SIMULATION</div><h1>單擺與能量守恆模擬器</h1></div>
+    <div class="credit">機電與物理專案｜開發者：<b>學號／姓名請自行填寫</b></div>
+  </header>
+  <main class="layout">
+    <section class="panel">
+      <div class="panel-head"><h2>即時運動視窗 <span style="color:var(--muted);font-weight:400">/ REAL-TIME MOTION</span></h2><span class="live" id="runState">● SIMULATING</span></div>
+      <div class="canvas-wrap"><canvas id="scene" aria-label="單擺物理動畫畫布"></canvas></div>
+      <div class="legend">
+        <span><i class="dot" style="background:#55d8ff"></i>擺錘與擺線</span>
+        <span><i class="dot" style="background:#55e6a5"></i>速度向量 v</span>
+        <span><i class="dot" style="background:#ff657a"></i>合力向量 F</span>
+        <span><i class="dot" style="background:#ffc96b"></i>運動軌跡</span>
+      </div>
+      <div class="toolbar">
+        <button class="btn primary" id="pauseBtn">Ⅱ 暫停</button>
+        <button class="btn" id="resetBtn">↺ 重置</button>
+        <button class="btn" id="clearBtn">⌫ 清除軌跡</button>
+        <button class="btn active" id="trailBtn">軌跡：開</button>
+        <button class="btn active" id="vectorBtn">向量：開</button>
+      </div>
+      <div class="hint">操作提示：拖曳擺錘可設定初始角度；按住 Shift 再拖曳可在放開時賦予切向初速度。暫停時也可重新定位。</div>
+    </section>
+    <aside class="side">
+      <section class="panel">
+        <div class="panel-head"><h2>物理參數控制</h2><span class="live">LIVE CONTROL</span></div>
+        <div class="controls">
+          <div class="control"><div class="control-top"><label for="length">擺長 L</label><span class="value" id="lengthVal">1.50 <small class="unit">m</small></span></div><input id="length" type="range" min=".5" max="3" step=".01" value="1.5"><div class="range-meta"><span>0.50 m</span><span>3.00 m</span></div></div>
+          <div class="control"><div class="control-top"><label for="mass">擺錘質量 m</label><span class="value" id="massVal">1.00 <small class="unit">kg</small></span></div><input id="mass" type="range" min=".2" max="5" step=".05" value="1"><div class="range-meta"><span>0.20 kg</span><span>5.00 kg</span></div></div>
+          <div class="control"><div class="control-top"><label for="angle">初始擺角 θ₀</label><span class="value" id="angleVal">35.0 <small class="unit">°</small></span></div><input id="angle" type="range" min="5" max="80" step=".5" value="35"><div class="range-meta"><span>5°</span><span>80°</span></div></div>
+          <div class="control"><div class="control-top"><label for="damping">阻尼係數 b</label><span class="value" id="dampingVal">0.040 <small class="unit">N·m·s/rad</small></span></div><input id="damping" type="range" min="0" max=".3" step=".005" value=".04"><div class="range-meta"><span>0.000</span><span>0.300</span></div></div>
+          <div class="control"><div class="control-top"><label for="gravity">重力加速度 g</label><span class="value" id="gravityVal">9.81 <small class="unit">m/s²</small></span></div><input id="gravity" type="range" min="1" max="20" step=".01" value="9.81"><div class="range-meta"><span>1.00</span><span>20.00</span></div></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>即時工程儀表板</h2><span class="live">TELEMETRY</span></div>
+        <div class="readouts">
+          <div class="metric"><div class="name">時間 t</div><div class="num" id="timeOut">0.00 <span class="unit2">s</span></div></div>
+          <div class="metric"><div class="name">角速度 ω</div><div class="num" id="omegaOut">0.000 <span class="unit2">rad/s</span></div></div>
+          <div class="metric"><div class="name">線速度 v</div><div class="num" id="speedOut">0.000 <span class="unit2">m/s</span></div></div>
+          <div class="metric"><div class="name">切向加速度</div><div class="num" id="accOut">0.000 <span class="unit2">m/s²</span></div></div>
+          <div class="metric"><div class="name">動能 Eₖ</div><div class="num" id="kinOut">0.000 <span class="unit2">J</span></div></div>
+          <div class="metric"><div class="name">位能 Eₚ</div><div class="num" id="potOut">0.000 <span class="unit2">J</span></div></div>
+          <div class="metric"><div class="name">總機械能 E</div><div class="num" id="totalOut">0.000 <span class="unit2">J</span></div></div>
+          <div class="metric"><div class="name">耗散能 Eᵈ</div><div class="num" id="dissOut">0.000 <span class="unit2">J</span></div></div>
+        </div>
+        <div class="energy">
+          <div class="energy-row"><span>動能比例</span><b id="kinPct">0%</b></div><div class="bar"><i id="kinBar" style="background:var(--green)"></i></div>
+          <div class="energy-row"><span>位能比例</span><b id="potPct">100%</b></div><div class="bar"><i id="potBar" style="background:var(--gold)"></i></div>
+          <div class="energy-row"><span>機械能保留率</span><b id="retainPct">100%</b></div><div class="bar"><i id="retainBar" style="background:var(--cyan)"></i></div>
+        </div>
+        <div class="formula"><b>運動方程（含轉動阻尼）</b><br>θ̈ = −(g/L) sin θ − (b/mL²)ω<br><b>能量定義</b><br>Eₖ = ½m(Lω)²　 Eₚ = mgL(1 − cos θ)<br>E_total = Eₖ + Eₚ；阻尼耗散功率 P = bω²</div>
+      </section>
+    </aside>
+  </main>
+</div>
+<script>
+(() => {
+'use strict';
+const canvas=document.getElementById('scene'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+const inputs={L:$('length'),m:$('mass'),a:$('angle'),b:$('damping'),g:$('gravity')};
+const defaults={L:1.5,m:1,a:35,b:.04,g:9.81};
+let p={...defaults},theta=35*Math.PI/180,omega=0,time=0,dissipated=0,initialEnergy=0;
+let running=true,showTrail=true,showVectors=true,dragging=false,trail=[],lastFrame=0,acceleration=0,dragVelocity=0,lastPointer=null,lastPointerTime=0,impartVelocity=false;
+const fixedStep=1/120;
+function readParams(){p={L:+inputs.L.value,m:+inputs.m.value,a:+inputs.a.value,b:+inputs.b.value,g:+inputs.g.value};
+ $('lengthVal').innerHTML=p.L.toFixed(2)+' <small class="unit">m</small>';
+ $('massVal').innerHTML=p.m.toFixed(2)+' <small class="unit">kg</small>';
+ $('angleVal').innerHTML=p.a.toFixed(1)+' <small class="unit">°</small>';
+ $('dampingVal').innerHTML=p.b.toFixed(3)+' <small class="unit">N·m·s/rad</small>';
+ $('gravityVal').innerHTML=p.g.toFixed(2)+' <small class="unit">m/s²</small>';
+}
+function energy(){const kinetic=.5*p.m*(p.L*omega)**2,potential=p.m*p.g*p.L*(1-Math.cos(theta));return {kinetic,potential,total:kinetic+potential};}
+function alpha(th,w){return -(p.g/p.L)*Math.sin(th)-(p.b/(p.m*p.L*p.L))*w;}
+function reset(){theta=p.a*Math.PI/180;omega=0;time=0;dissipated=0;trail=[];initialEnergy=energy().total;acceleration=alpha(theta,omega);updateDashboard();}
+function step(dt){
+ // Semi-implicit Euler with small fixed substeps; damping work is integrated as b*omega^2.
+ const oldOmega=omega,oldTheta=theta;
+ const a0=alpha(theta,omega);
+ omega+=a0*dt;
+ theta+=omega*dt;
+ const midOmega=(oldOmega+omega)/2;
+ dissipated+=p.b*midOmega*midOmega*dt;
+ time+=dt;
+ acceleration=alpha(theta,omega);
+ if(!Number.isFinite(theta)||!Number.isFinite(omega)){reset();}
+}
+function resize(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);draw();}
+function geometry(){const w=canvas.clientWidth,h=canvas.clientHeight,origin={x:w*.5,y:Math.max(65,h*.19)},scale=Math.min((h*.68)/p.L,(w*.37)/p.L,190),bob={x:origin.x+Math.sin(theta)*p.L*scale,y:origin.y+Math.cos(theta)*p.L*scale};return {w,h,origin,scale,bob};}
+function arrow(x1,y1,x2,y2,color,label){const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy);if(len<3)return;const ang=Math.atan2(dy,dx),head=8;ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-head*Math.cos(ang-.48),y2-head*Math.sin(ang-.48));ctx.lineTo(x2-head*Math.cos(ang+.48),y2-head*Math.sin(ang+.48));ctx.closePath();ctx.fill();ctx.font='bold 12px Segoe UI';ctx.fillText(label,x2+7,y2-7);}
+function draw(){
+ const {w,h,origin,oops,bob,scale}=geometry();ctx.clearRect(0,0,w,h);
+ // subtle engineering grid
+ ctx.save();ctx.strokeStyle='#172840';ctx.lineWidth=1;for(let x=0;x<w;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}for(let y=0;y<h;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}ctx.restore();
+ // reference axis and pivot
+ ctx.strokeStyle='#415570';ctx.setLineDash([4,6]);ctx.beginPath();ctx.moveTo(origin.x,origin.y);ctx.lineTo(origin.x,h-18);ctx.stroke();ctx.setLineDash([]);
+ ctx.fillStyle='#d7e7ff';ctx.beginPath();ctx.arc(origin.x,origin.y,5,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle='#607c9f';ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(origin.x-29,origin.y-8);ctx.lineTo(origin.x+29,origin.y-8);ctx.stroke();
+ // angle guide
+ ctx.strokeStyle='#4d6686';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(origin.x,origin.y,Math.min(54,p.L*scale*.32),Math.PI/2,Math.PI/2-theta,theta<0);ctx.stroke();
+ ctx.fillStyle='#9bb0ce';ctx.font='12px Segoe UI';ctx.fillText('θ',origin.x+20,origin.y+48);
+ if(showTrail&&trail.length>1){ctx.beginPath();trail.forEach((pt,i)=>i?ctx.lineTo(pt.x,pt.y):ctx.moveTo(pt.x,pt.y));ctx.strokeStyle='rgba(255,201,107,.68)';ctx.lineWidth=2;ctx.stroke();trail.forEach((pt,i)=>{if(i%12===0){ctx.fillStyle='rgba(255,201,107,.35)';ctx.beginPath();ctx.arc(pt.x,pt.y,2,0,Math.PI*2);ctx.fill()}})}
+ // pendulum string and bob
+ ctx.strokeStyle='#55d8ff';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(origin.x,origin.y);ctx.lineTo(bob.x,bob.y);ctx.stroke();
+ const radius=10+Math.sqrt(p.m)*2.3,grad=ctx.createRadialGradient(bob.x-radius*.35,bob.y-radius*.4,2,bob.x,bob.y,radius*1.3);grad.addColorStop(0,'#e4fbff');grad.addColorStop(.28,'#55d8ff');grad.addColorStop(1,'#08749d');
+ ctx.shadowColor='#35cfff';ctx.shadowBlur=20;ctx.fillStyle=grad;ctx.beginPath();ctx.arc(bob.x,bob.y,radius,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#baf4ff';ctx.lineWidth=1.2;ctx.stroke();
+ ctx.fillStyle='#c5d7ef';ctx.font='11px Segoe UI';ctx.fillText('m = '+p.m.toFixed(2)+' kg',bob.x+radius+8,bob.y+4);
+ if(showVectors){
+  const vx=p.L*omega*Math.cos(theta),vy=-p.L*omega*Math.sin(theta);
+  const vScale=24;arrow(bob.x,bob.y,bob.x+vx*vScale,bob.y+vy*vScale,'#55e6a5','v');
+  // net force vector: tangential component only (the visible vector is scaled for legibility)
+  const at=alpha(theta,omega)*p.L,tx=Math.cos(theta),ty=-Math.sin(theta),fScale=7;
+  arrow(bob.x,bob.y,bob.x+at*tx*fScale,bob.y+at*ty*fScale,'#ff657a','Fₜ');
+ }
+ // status labels
+ ctx.fillStyle='#7f96b7';ctx.font='11px Segoe UI';ctx.fillText('PIVOT',origin.x+38,origin.y-7);ctx.fillText('g ↓',w-38,h-25);
+}
+function updateDashboard(){
+ const e=energy(),total0=Math.max(initialEnergy,1e-9),den=Math.max(e.total,1e-9),speed=Math.abs(p.L*omega);
+ const set=(id,val,dec=3)=>$(id).innerHTML=val.toFixed(dec)+' <span class="unit2">'+({timeOut:'s',omegaOut:'rad/s',speedOut:'m/s',accOut:'m/s²',kinOut:'J',potOut:'J',totalOut:'J',dissOut:'J'}[id]||'')+'</span>';
+ set('timeOut',time,2);set('omegaOut',omega,3);set('speedOut',speed,3);set('accOut',Math.abs(acceleration*p.L),3);
+ set('kinOut',e.kinetic,3);set('potOut',e.potential,3);set('totalOut',e.total,3);set('dissOut',dissipated,3);
+ const kp=e.kinetic/den*100,pp=e.potential/den*100,rp=Math.min(100,e.total/total0*100);
+ $('kinPct').textContent=kp.toFixed(1)+'%';$('potPct').textContent=pp.toFixed(1)+'%';$('retainPct').textContent=rp.toFixed(1)+'%';
+ $('kinBar').style.width=kp+'%';$('potBar').style.width=pp+'%';$('retainBar').style.width=rp+'%';
+}
+function frame(ts){if(!lastFrame)lastFrame=ts;let elapsed=Math.min((ts-lastFrame)/1000,.05);lastFrame=ts;
+ if(running&&!dragging){let remaining=elapsed;while(remaining>0){const dt=Math.min(fixedStep,remaining);step(dt);remaining-=dt}
+  const {bob}=geometry();trail.push({x:bob.x,y:bob.y});if(trail.length>900)trail.shift();updateDashboard();}
+ draw();requestAnimationFrame(frame);
+}
+function pointerPos(e){const r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};}
+function pick(e){const pos=pointerPos(e),{origin,bob}=geometry();return Math.hypot(pos.x-bob.x,pos.y-bob.y)<35;}
+canvas.addEventListener('pointerdown',e=>{if(pick(e)){dragging=true;impartVelocity=e.shiftKey;dragVelocity=0;lastPointer=pointerPos(e);lastPointerTime=performance.now();canvas.setPointerCapture(e.pointerId);trail=[];}});
+canvas.addEventListener('pointermove',e=>{if(!dragging)return;const pos=pointerPos(e),{origin}=geometry();let dx=pos.x-origin.x,dy=pos.y-origin.y;let ang=Math.atan2(dx,dy);const limit=80*Math.PI/180;theta=Math.max(-limit,Math.min(limit,ang));const now=performance.now(),dt=Math.max((now-lastPointerTime)/1000,.001);if(impartVelocity&&lastPointer){const dpx=pos.x-lastPointer.x,dpy=pos.y-lastPointer.y;const radius=Math.max(35,Math.hypot(dx,dy));const tangential=(dpx*Math.cos(theta)-dpy*Math.sin(theta))/radius;dragVelocity=Math.max(-12,Math.min(12,tangential/dt));}else{dragVelocity=0;}lastPointer=pos;lastPointerTime=now;omega=0;acceleration=alpha(theta,omega);updateDashboard();draw();});
+function release(){if(dragging){dragging=false;if(impartVelocity)omega=dragVelocity;acceleration=alpha(theta,omega);lastPointer=null;trail=[];updateDashboard();}}
+canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);
+Object.entries(inputs).forEach(([key,input])=>input.addEventListener('input',()=>{readParams();if(key==='a'&&time===0&&!dragging)theta=p.a*Math.PI/180;initialEnergy=Math.max(initialEnergy,energy().total);acceleration=alpha(theta,omega);updateDashboard();draw();}));
+$('pauseBtn').addEventListener('click',()=>{running=!running;$('pauseBtn').textContent=running?'Ⅱ 暫停':'▶ 繼續';$('runState').textContent=running?'● SIMULATING':'● PAUSED';$('runState').style.color=running?'var(--green)':'var(--gold)';});
+$('resetBtn').addEventListener('click',()=>{readParams();reset();});
+$('clearBtn').addEventListener('click',()=>{trail=[];draw();});
+$('trailBtn').addEventListener('click',()=>{showTrail=!showTrail;$('trailBtn').textContent='軌跡：'+(showTrail?'開':'關');$('trailBtn').classList.toggle('active',showTrail);if(!showTrail)trail=[];draw();});
+$('vectorBtn').addEventListener('click',()=>{showVectors=!showVectors;$('vectorBtn').textContent='向量：'+(showVectors?'開':'關');$('vectorBtn').classList.toggle('active',showVectors);draw();});
+readParams();reset();new ResizeObserver(resize).observe(canvas);resize();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
